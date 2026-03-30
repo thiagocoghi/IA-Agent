@@ -20,7 +20,7 @@ jobs:
           python-version: "3.12"
 
       - name: Instalar dependências
-          run: |
+        run: |
             python -m pip install --upgrade pip
             # 🚨 A correção está aqui: o nome correto do pacote é google-generativeai
             pip install pytest pydantic-settings httpx requests google-generativeai supabase
