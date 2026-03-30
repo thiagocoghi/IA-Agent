@@ -1,0 +1,41 @@
+name: QA Pipeline - Pytest
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      # Se o seu teste dependesse de um banco real (Docker), subiríamos aqui.
+      # Como usamos o Supabase (Cloud), vamos apenas configurar as Secrets.
+
+    steps:
+    - name: Checkout do código
+      uses: actions/checkout@v4
+
+    - name: Configurar Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+
+    - name: Instalar dependências
+      run: |
+        python -m pip install --upgrade pip
+        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+    - name: Rodar Testes de Integração com Pytest
+      # Aqui passamos as variáveis de ambiente necessárias para os testes passarem no GitHub
+      env:
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+        SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+        ZAPI_INSTANCE_ID: ${{ secrets.ZAPI_INSTANCE_ID }}
+        ZAPI_INSTANCE_TOKEN: ${{ secrets.ZAPI_INSTANCE_TOKEN }}
+        ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
+      run: |
+        python -m pytest tests/test_agent.py -s

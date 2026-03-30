@@ -27,19 +27,17 @@ async def webhook_zapi(request: Request):
         return {"status": "ignored"}
 
     try:
-        # 2. Extração de Dados (Estrutura Correta da Z-API)
+        # 2. Extração de Dados
         remote_jid = data.get("phone")
-        # A Z-API envia o texto dentro de 'text' -> 'message'
         user_message = data.get("text", {}).get("message")
 
         if user_message and remote_jid:
             print(f"📩 Mensagem de {remote_jid}: {user_message}")
 
-            # 🧠 CHAMA O AGENTE (Passando o ID para a Memória de Chat funcionar)
+            # 🧠 CHAMA O AGENTE
             bot_response = agente.responder(remote_jid, user_message)
 
-            # --- LÓGICA DE MÍDIA (Antes e Depois) ---
-            # Procura por URLs de imagem na resposta da IA
+            # --- LÓGICA DE MÍDIA REFEITA (CORREÇÃO DE DUPLICIDADE) ---
             urls = re.findall(r'(https?://[^\s]+\.(?:jpg|jpeg|png|gif|webp))', bot_response)
 
             headers = {
@@ -48,25 +46,28 @@ async def webhook_zapi(request: Request):
             }
 
             if urls:
-                for url in urls:
-                    img_url = f"https://api.z-api.io/instances/{ZAPI_ID}/token/{ZAPI_TOKEN}/send-image"
-                    img_payload = {
-                        "phone": remote_jid,
-                        "image": url,
-                        "caption": "Dá uma olhadinha nesse resultado incrível! ✨"
-                    }
-                    requests.post(img_url, json=img_payload, headers=headers)
+                # Se tem URL, mandamos apenas UMA mensagem de IMAGEM com o texto na LEGENDA
+                url_para_envio = urls[0]
 
-                # Remove a URL do texto final para o chat ficar limpo
-                bot_response = re.sub(r'(https?://[^\s]+\.(?:jpg|jpeg|png|gif|webp))', '', bot_response)
+                # Removemos o link do texto da Bella para a legenda ficar limpa
+                texto_legenda = re.sub(r'(https?://[^\s]+\.(?:jpg|jpeg|png|gif|webp))', '', bot_response).strip()
 
-            print(f"🤖 Bella respondeu: {bot_response}")
-            # 📡 3. ENVIO DO TEXTO FINAL VIA Z-API
-            send_url = f"https://api.z-api.io/instances/{ZAPI_ID}/token/{ZAPI_TOKEN}/send-text"
-            payload = {"phone": remote_jid, "message": bot_response.strip()}
+                img_url = f"https://api.z-api.io/instances/{ZAPI_ID}/token/{ZAPI_TOKEN}/send-image"
+                img_payload = {
+                    "phone": remote_jid,
+                    "image": url_para_envio,
+                    "caption": texto_legenda if texto_legenda else "Dá uma olhadinha nesse resultado! ✨"
+                }
+                res = requests.post(img_url, json=img_payload, headers=headers)
+                print(f"🤖 Bella respondeu com Imagem. Status Z-API: {res.status_code}")
 
-            res = requests.post(send_url, json=payload, headers=headers)
-            print(f"📡 Status Z-API: {res.status_code}")
+            else:
+                # Se NÃO tem URL, mandamos apenas a mensagem de TEXTO normal
+                print(f"🤖 Bella respondeu: {bot_response}")
+                send_url = f"https://api.z-api.io/instances/{ZAPI_ID}/token/{ZAPI_TOKEN}/send-text"
+                payload = {"phone": remote_jid, "message": bot_response.strip()}
+                res = requests.post(send_url, json=payload, headers=headers)
+                print(f"📡 Status Z-API: {res.status_code}")
 
         return {"status": "success"}
 

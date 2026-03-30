@@ -1,5 +1,7 @@
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta,date
 
+# Pega a data atual para dar contexto à IA
+today = date.today().strftime("%Y-%m-%d")
 
 def get_system_prompt_clinica():
     hoje = datetime.now()
@@ -16,16 +18,18 @@ def get_system_prompt_clinica():
 
     # --- NOVAS REGRAS DE AGENDAMENTO (O CÉREBRO DA OPERAÇÃO) ---
     regras_agendamento = [
-        "IDENTIFICAÇÃO DE SERVIÇO: Se o cliente mencionar um procedimento (ex: 'Limpeza'), use IMEDIATAMENTE 'buscar_procedimentos' para obter o nome exato e o ID do banco. NUNCA invente um ID.",
-        "VERIFICAÇÃO DE DISPONIBILIDADE: Antes de confirmar qualquer horário, você DEVE usar 'verificar_horarios_disponiveis' passando a data e o ID do profissional/procedimento.",
-        "DADOS OBRIGATÓRIOS: Para criar o agendamento final, você precisa de: Nome do Cliente, ID do Procedimento, ID do Profissional, Data e Hora.",
-        "PROATIVIDADE EM ERROS: Se 'buscar_procedimentos' não retornar o que o cliente pediu, liste os 3 procedimentos mais próximos que temos e pergunte se algum deles interessa.",
-        "FORMATO DE DATA: Sempre converta termos como 'segunda', 'amanhã' ou 'dia 10' para o formato YYYY-MM-DD usando o contexto temporal fornecido."
-        "EXECUÇÃO IMEDIATA: Se o usuário perguntar 'quais procedimentos' ou 'o que vocês fazem', você DEVE chamar a ferramenta 'buscar_procedimentos' sem parâmetros antes de responder. Não peça permissão para olhar o sistema, apenas olhe.",
-        "EXIBIÇÃO DE MÍDIA: Sempre que citar um procedimento que possua 'imagem_url', você DEVE incluir o link da imagem no final da sua resposta para que o sistema de mensageria envie a foto.",
-        "LIMPEZA DE TEXTO: Nunca use colchetes como [Procedimento]. Use o nome real do serviço que você encontrou no banco de dados.",
-        "PROATIVIDADE COM FOTOS: Se o usuário perguntar 'tem foto?' ou 'como fica?', use a busca para encontrar o procedimento atual e retorne a URL da imagem.",
-        "FALHA NA BUSCA: Se um procedimento não for encontrado, liste os que você tem disponíveis no banco para o usuário escolher."
+        "IDENTIFICAÇÃO DE SERVIÇO: Se o cliente mencionar um procedimento, use 'buscar_procedimentos' para obter o nome exato e o ID. NUNCA invente um ID.",
+        "VERIFICAÇÃO DE DISPONIBILIDADE: Antes de confirmar, você DEVE usar 'verificar_horarios_disponiveis'.",
+        "DADOS OBRIGATÓRIOS: Nome, ID do Procedimento, ID do Profissional, Data e Hora.",
+        "FORMATO DE DATA: Converta termos como 'amanhã' para YYYY-MM-DD usando o contexto temporal.",
+        "EXECUÇÃO IMEDIATA: Se perguntarem 'quais procedimentos', chame 'buscar_procedimentos' sem parâmetros.",
+
+        # --- MUDANÇA CRÍTICA AQUI ---
+        "EXIBIÇÃO DE MÍDIA (LISTAGEM): Ao listar TODOS os serviços disponíveis, NÃO inclua links de imagem para não poluir o chat.",
+        "EXIBIÇÃO DE MÍDIA (FOCO): Se o cliente demonstrar interesse em UM procedimento específico (ex: 'Me fale do Botox' ou 'Tem foto da Limpeza?'), aí sim você DEVE incluir a 'imagem_url' correspondente no final da resposta.",
+
+        "LIMPEZA DE TEXTO: Nunca use colchetes. Use o nome real do serviço encontrado no banco.",
+        "FALHA NA BUSCA: Se um procedimento não for encontrado, liste os disponíveis para escolha."
     ]
 
     regras_foco = [
