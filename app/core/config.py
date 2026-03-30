@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     # Banco e IA
     SUPABASE_URL: str
     SUPABASE_KEY: str
-    GOOGLE_API_KEY: str
+    GEMINI_API_KEY: str
 
     # Nova Infra: Z-API
     ZAPI_INSTANCE_ID: str
