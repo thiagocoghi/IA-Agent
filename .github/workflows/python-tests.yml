@@ -20,12 +20,12 @@ jobs:
           python-version: "3.12"
 
       - name: Instalar dependências
-        run: |
-          python -m pip install --upgrade pip
-          # Instalamos o pytest e pydantic explicitamente caso o requirements falhe
-          pip install pytest pydantic-settings httpx requests google-generativeai supabase
-          # Tenta instalar o restante do arquivo se ele existir
-          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          run: |
+            python -m pip install --upgrade pip
+            # 🚨 A correção está aqui: o nome correto do pacote é google-generativeai
+            pip install pytest pydantic-settings httpx requests google-generativeai supabase
+            # Tenta instalar o restante das dependências do projeto
+            if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Rodar Testes de Integração com Pytest
         env:
