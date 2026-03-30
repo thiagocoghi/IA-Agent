@@ -10,10 +10,6 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
-    services:
-      # Se o seu teste dependesse de um banco real (Docker), subiríamos aqui.
-      # Como usamos o Supabase (Cloud), vamos apenas configurar as Secrets.
-
     steps:
     - name: Checkout do código
       uses: actions/checkout@v4
@@ -29,7 +25,6 @@ jobs:
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
     - name: Rodar Testes de Integração com Pytest
-      # Aqui passamos as variáveis de ambiente necessárias para os testes passarem no GitHub
       env:
         GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
