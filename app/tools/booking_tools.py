@@ -1,9 +1,85 @@
-from app.database.connection import supabase
+import os
+import json
+import holidays
+from pathlib import Path
 from datetime import datetime
+from app.database.connection import supabase
+
+# Configuração de caminhos para o JSON
+BASE_DIR = Path(__file__).parent
+FERIADOS_PATH = BASE_DIR / "feriados_municipais.json"
+
+
+def carregar_feriados_municipais():
+    """Lê o arquivo JSON de feriados locais."""
+    try:
+        if FERIADOS_PATH.exists():
+            with open(FERIADOS_PATH, "r", encoding="utf-8") as f:
+                return json.load(f)
+    except Exception as e:
+        print(f"⚠️ Erro ao carregar feriados municipais: {e}")
+    return {}
+
+
+def validar_regras_clinica(data_dt, hora_str):
+    """
+    Valida feriados (JSON Municipal + Biblioteca Estadual/Nacional) e horários.
+    """
+    # 1. Configurações de Localização do Ambiente
+    estado_env = os.getenv("CLINICA_ESTADO", "SP").upper()
+    cidade_env = os.getenv("CLINICA_CIDADE", "Sorocaba").lower()
+    dia_mes = data_dt.strftime("%m-%d")
+
+    # 2. Validação de Feriados Municipais (Via JSON)
+    feriados_municipais = carregar_feriados_municipais()
+    if cidade_env in feriados_municipais:
+        # Verifica se o dia atual está no mapeamento daquela cidade
+        if dia_mes in feriados_municipais[cidade_env]:
+            nome_feriado = feriados_municipais[cidade_env][dia_mes]
+            return False, f"feriado municipal de {nome_feriado} (clínica fechada)"
+
+    # 3. Validação de Feriados Estaduais/Nacionais (Biblioteca Holidays)
+    try:
+        if estado_env in ["BR", "NACIONAL"]:
+            br_holidays = holidays.BR()
+        else:
+            br_holidays = holidays.BR(subdiv=estado_env)
+    except:
+        br_holidays = holidays.BR()
+
+    if data_dt in br_holidays:
+        return False, f"feriado de {br_holidays.get(data_dt)} (clínica fechada)"
+
+    # 4. Trava de Domingos
+    if data_dt.weekday() == 6:
+        return False, "domingo (não abrimos)"
+
+    # 5. Trava de Horários
+    try:
+        # Normalização da string de hora (ex: "10h" -> "10:00")
+        hora_limpa = hora_str.lower().replace("h", ":").split()[0]
+        if ":" not in hora_limpa: hora_limpa += ":00"
+
+        hora_dt = datetime.strptime(hora_limpa, "%H:%M").time()
+
+        h9 = datetime.strptime("09:00", "%H:%M").time()
+        h12 = datetime.strptime("12:00", "%H:%M").time()
+        h18 = datetime.strptime("18:00", "%H:%M").time()
+
+        if data_dt.weekday() == 5:  # Sábado
+            if hora_dt >= h12 or hora_dt < h9:
+                return False, "infelizmente sábado só atendemos até as 12:00"
+        else:  # Semana
+            if not (h9 <= hora_dt < h18):
+                return False, "infelizmente atendemos apenas das 09h às 18h"
+
+        return True, None
+    except Exception:
+        return False, "horário inválido"
 
 
 def buscar_procedimentos(nome_termo: str = None):
-    """Busca procedimentos no banco de dados, incluindo imagem_url."""
+    """Mantém a lógica original de busca por termo ou listagem total."""
     try:
         query = supabase.table("procedimentos").select("*")
         if nome_termo:
@@ -11,50 +87,74 @@ def buscar_procedimentos(nome_termo: str = None):
         res = query.execute()
         return res.data
     except Exception as e:
-        return f"Erro ao buscar procedimentos: {e}"
+        return f"Puxa, não consegui consultar os procedimentos agora: {e}"
 
 
 def buscar_profissionais():
-    """Retorna a lista de especialistas da clínica."""
+    """Mantém a listagem original de profissionais."""
     try:
         res = supabase.table("profissionais").select("*").execute()
         return res.data
     except Exception as e:
-        return f"Erro ao buscar profissionais: {e}"
+        return f"Não consegui ver nossos profissionais disponíveis: {e}"
 
 
 def verificar_horarios_disponiveis(data_desejada: str):
-    """Consulta horários livres para uma data (YYYY-MM-DD)."""
     try:
-        # Busca todos os agendamentos do dia para comparar
+        # Converte a string para objeto date
+        data_dt = datetime.strptime(data_desejada, "%Y-%m-%d").date()
+
+        # Validação de feriado/domingo ANTES de ir no banco
+        # Usamos um horário padrão (09:00) apenas para checar se o dia está aberto
+        aberto, motivo = validar_regras_clinica(data_dt, "09:00")
+
+        if not aberto and "horário" not in motivo:
+            # Retorno claro para a Bella humanizar
+            return f"FECHADO: No dia {data_desejada} é {motivo}."
+
+        # Busca agendamentos (Ajuste de fuso horário para o Supabase)
         res = supabase.table("agendamentos") \
             .select("data_hora") \
-            .filter("data_hora", "gte", f"{data_desejada}T00:00:00+00:00") \
-            .filter("data_hora", "lte", f"{data_desejada}T23:59:59+00:00") \
+            .filter("data_hora", "gte", f"{data_desejada}T00:00:00.000Z") \
+            .filter("data_hora", "lte", f"{data_desejada}T23:59:59.999Z") \
             .execute()
 
-        # Extrai apenas a HORA:MINUTO para comparar
+        # Lógica de horários disponíveis
+        horarios_base = ["09:00", "10:00", "11:00"] if data_dt.weekday() == 5 else [f"{h:02d}:00" for h in range(9, 18)]
+
+        # Limpa o 'Z' ou '+00:00' para comparar strings de hora
         ocupados = []
         for a in res.data:
-            dt = datetime.fromisoformat(a['data_hora'].replace('Z', '+00:00'))
-            ocupados.append(dt.strftime("%H:%M"))
+            hora_limpa = a['data_hora'].split('T')[1][:5]
+            ocupados.append(hora_limpa)
 
-        # Horários de atendimento da clínica
-        horarios_clinica = ["08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00"]
-        disponiveis = [h for h in horarios_clinica if h not in ocupados]
+        disponiveis = [h for h in horarios_base if h not in ocupados]
 
         if not disponiveis:
-            return f"Infelizmente não temos horários para {data_desejada}. Poderia sugerir outro dia?"
+            return "LOTADO: Infelizmente não temos horários para este dia."
 
-        return f"Horários disponíveis para {data_desejada}: {', '.join(disponiveis)}"
+        return f"DISPONIVEL: Temos esses horários: {', '.join(disponiveis)}."
+
     except Exception as e:
-        return f"Erro ao consultar agenda: {e}"
+        # Se cair aqui, o teste falha com a mensagem de "probleminha"
+        print(f"ERRO NO BOOKING_TOOLS: {e}")  # Para você ver no console do PyCharm
+        return "ERRO: Tive um problema técnico ao acessar a agenda."
 
 
 def criar_agendamento(nome_cliente: str, data_hora: str, procedimento_id: str, profissional_id: str = None):
-    """Grava o agendamento final no banco de dados."""
+    """
+    Reintegra a lógica original de fallback para profissional_id
+    e mantém a validação final de segurança.
+    """
     try:
-        # Se não vier profissional, busca o primeiro ID disponível
+        # Normalização e Validação final (Segurança de QA)
+        dt_obj = datetime.fromisoformat(data_hora.replace('Z', '+00:00'))
+        aberto, motivo = validar_regras_clinica(dt_obj.date(), dt_obj.strftime("%H:%M"))
+
+        if not aberto:
+            return f"Ah! Infelizmente não conseguimos marcar nesse horário por conta de {motivo}. Vamos escolher outro?"
+
+        # Lógica Original: Se não informou profissional, pega o primeiro disponível
         if not profissional_id:
             prof = supabase.table("profissionais").select("id").limit(1).execute()
             if prof.data:
@@ -67,7 +167,9 @@ def criar_agendamento(nome_cliente: str, data_hora: str, procedimento_id: str, p
             "profissional_id": profissional_id,
             "status": "confirmado"
         }
+
         supabase.table("agendamentos").insert(data).execute()
-        return "✅ Agendamento realizado com sucesso! Mal podemos esperar para te ver!"
+        return f"Tudo pronto, {nome_cliente}! ✨ Seu horário está confirmadíssimo. Mal podemos esperar para te receber!"
+
     except Exception as e:
-        return f"❌ Erro ao gravar: {e}"
+        return "Houve um probleminha ao salvar seu horário, mas não desiste de mim! Pode confirmar os dados uma última vez? 💖"

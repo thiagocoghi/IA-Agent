@@ -27,7 +27,7 @@ jobs:
             # Instalamos a biblioteca oficial do Gemini
             pip install google-genai
             # Instalamos o restante das dependências necessárias
-            pip install pytest pydantic-settings httpx requests supabase
+            pip install pytest pydantic-settings httpx requests supabase holidays
             if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Rodar Testes de Integração com Pytest
