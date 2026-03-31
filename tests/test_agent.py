@@ -88,3 +88,13 @@ def test_regra_horario_limite_sabado(mock_env_location):
 
     assert any(word in resposta.lower() for word in ["fechada", "12:00", "horário", "infelizmente"]), \
         "IA permitiu agendamento no sábado à tarde (deveria estar fechado)."
+
+def test_proatividade_feriado(mock_env_location):
+        mock_env_location("SP", "Sorocaba")
+        pergunta = "Quero agendar para 15/08 às 10h"
+        resposta = agente.responder("user_teste", pergunta)
+
+        # O teste agora exige que ela ofereça uma alternativa
+        assert "Infelizmente" in resposta
+        assert any(palavra in resposta.lower() for palavra in ["próximo", "sugerir", "que tal", "posso", "segunda"])
+        print(f"Bella Proativa: {resposta}")
