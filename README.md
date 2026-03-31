@@ -87,5 +87,9 @@ Plaintext
 
 - [ ] Notifications: Envio automático de lembretes de agendamento 24h antes.
 
+- [ ] Função de lembrete aos clientes quando ficam muito tempo sem marcar procedimentos
+
+- [ ] Cancelamento/ Reagendamento atravéz de mensagens no whatsapp
+
 ### 👨‍💻 Desenvolvedor
 Thiago Coghi - QA Automation Engineer 🚀
