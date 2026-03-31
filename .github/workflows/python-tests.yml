@@ -25,21 +25,22 @@ jobs:
             # Removemos qualquer resquício do pacote 'google' genérico antes
             pip uninstall google -y || true
             # Instalamos a biblioteca oficial do Gemini
-            pip install google-generativeai
+            pip install google-genai
             # Instalamos o restante das dependências necessárias
             pip install pytest pydantic-settings httpx requests supabase
             if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Rodar Testes de Integração com Pytest
         env:
+            # Aqui o GitHub pega o valor da "Secret" e coloca na variável de ambiente
             PYTHONPATH: ${{ github.workspace }}
-            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
             SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
             ZAPI_INSTANCE_ID: ${{ secrets.ZAPI_INSTANCE_ID }}
             ZAPI_INSTANCE_TOKEN: ${{ secrets.ZAPI_INSTANCE_TOKEN }}
             ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
         run: |
-            # Adicionamos um check de debug para garantir que o genai está acessível
-            python -c "from google import genai; print('✅ SDK do Google carregado com sucesso!')"
-            python -m pytest tests/test_agent.py -s
+            # Esse comando de debug vai confirmar se a injeção funcionou
+            python -c "import os; print('✅ SUPABASE_URL carregada:', bool(os.getenv('SUPABASE_URL')))"
+            python -m pytest tests/test_agent.py -v -s
