@@ -9,6 +9,11 @@ from app.tools.booking_tools import (
     criar_agendamento
 )
 from app.agents.prompts import get_system_prompt_clinica
+from tenacity import retry, stop_after_attempt, wait_fixed
+
+@retry(stop=stop_after_attempt(3), wait=wait_fixed(2))
+def enviar_mensagem_com_retry(chat_session, mensagem):
+    return chat_session.send_message(mensagem)
 
 load_dotenv()
 
