@@ -2,7 +2,7 @@ name: QA Pipeline - Pytest
 
 on:
   push:
-    branches: [ "main", "master", "update" ]
+    branches: [ "**" ]
   pull_request:
     branches: [ "main", "master" ]
 
