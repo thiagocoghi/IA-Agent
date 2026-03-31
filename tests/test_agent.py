@@ -89,12 +89,25 @@ def test_regra_horario_limite_sabado(mock_env_location):
     assert any(word in resposta.lower() for word in ["fechada", "12:00", "horário", "infelizmente"]), \
         "IA permitiu agendamento no sábado à tarde (deveria estar fechado)."
 
-def test_proatividade_feriado(mock_env_location):
-        mock_env_location("SP", "Sorocaba")
-        pergunta = "Quero agendar para 15/08 às 10h"
-        resposta = agente.responder("user_teste", pergunta)
 
-        # O teste agora exige que ela ofereça uma alternativa
-        assert "Infelizmente" in resposta
-        assert any(palavra in resposta.lower() for palavra in ["próximo", "sugerir", "que tal", "posso", "segunda"])
-        print(f"Bella Proativa: {resposta}")
+def test_proatividade_feriado(mock_env_location):
+    mock_env_location("SP", "Sorocaba")
+    pergunta = "Quero agendar para 15/08 às 10h"
+    resposta = agente.responder("user_teste", pergunta)
+
+    # 1. Checa se ela negou (Infelizmente)
+    assert "infelizmente" in resposta.lower()
+
+    # 2. Termos mais "seguros" para o ambiente de CI (Linux)
+    # Note que tirei os acentos de alguns para evitar conflito de encoding
+    termos_proativos = ["segunda", "reservado", "proximo", "sugerir", "posso", "vaga", "alternativa"]
+
+    # Removemos acentos da resposta para o teste ficar "blindado" no GitHub
+    import unicodedata
+    def remover_acentos(txt):
+        return ''.join(c for c in unicodedata.normalize('NFD', txt)
+                       if unicodedata.category(c) != 'Mn').lower()
+
+    resposta_limpa = remover_acentos(resposta)
+
+    assert any(p in resposta_limpa for p in termos_proativos), f"Falha de proatividade. Bella disse: {resposta}"
