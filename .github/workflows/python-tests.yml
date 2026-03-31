@@ -2,7 +2,7 @@ name: QA Pipeline - Pytest
 
 on:
   push:
-    branches: [ "main", "master", "update" ]
+    branches: [ "**" ]
   pull_request:
     branches: [ "main", "master" ]
 
@@ -27,15 +27,16 @@ jobs:
             # Instalamos a biblioteca oficial do Gemini
             pip install google-genai
             # Instalamos o restante das dependências necessárias
-            pip install pytest pydantic-settings httpx requests supabase
+            pip install pytest pydantic-settings httpx requests supabase holidays
             if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
       - name: Rodar Testes de Integração com Pytest
         env:
+            # Aqui o GitHub pega o valor da "Secret" e coloca na variável de ambiente
             PYTHONPATH: ${{ github.workspace }}
-            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
             SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
             SUPABASE_KEY: ${{ secrets.SUPABASE_KEY }}
+            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
             ZAPI_INSTANCE_ID: ${{ secrets.ZAPI_INSTANCE_ID }}
             ZAPI_INSTANCE_TOKEN: ${{ secrets.ZAPI_INSTANCE_TOKEN }}
             ZAPI_CLIENT_TOKEN: ${{ secrets.ZAPI_CLIENT_TOKEN }}
