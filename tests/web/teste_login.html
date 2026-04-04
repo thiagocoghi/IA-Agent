@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste de Login SaaS</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <h2>Login do Sistema</h2>
+    <input type="email" id="email" placeholder="Seu e-mail">
+    <input type="password" id="password" placeholder="Sua senha">
+    <br><br>
+    <button id="btnEntrar">Entrar</button>
+    <button id="btnBuscar">Ver Agendamentos (RLS)</button>
+
+    <div id="status" style="margin-top:20px; font-weight:bold;">Aguardando...</div>
+    <pre id="resultado" style="background:#eee; padding:10px;"></pre>
+
+    <script>
+        // 1. CONFIGURAÇÃO - COLOQUE SEUS DADOS REAIS AQUI
+        var SUPABASE_URL = 'https://ycbibzsnkebqpdhzfxqk.supabase.co';
+        var SUPABASE_KEY = 'AIzaSyDdIwRQesih7ViJySFc3p_t1biR1XLVRRE';
+
+        var _supabase;
+
+        function iniciarSupabase() {
+            if (window.supabase) {
+                _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                console.log("✅ Supabase carregado e inicializado!");
+                document.getElementById('status').innerText = "Sistema pronto.";
+
+                // Vincula os cliques aos botões
+                document.getElementById('btnEntrar').onclick = realizarLogin;
+                document.getElementById('btnBuscar').onclick = buscarDados;
+            } else {
+                console.error("❌ Erro: A biblioteca ainda não carregou. Tentando de novo...");
+                setTimeout(iniciarSupabase, 500);
+            }
+        }
+
+        async function realizarLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            console.log("Tentando login...");
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: email,
+                password: password
+            });
+
+            if (error) {
+                document.getElementById('status').innerText = "Erro: " + error.message;
+                alert("Falha: " + error.message);
+            } else {
+                document.getElementById('status').innerText = "Logado como: " + data.user.email;
+                alert("Sucesso! Clique em 'Ver Agendamentos' para testar o RLS.");
+            }
+        }
+
+        async function buscarDados() {
+            console.log("Buscando dados filtrados pelo RLS...");
+            const { data, error } = await _supabase.from('agendamentos').select('*');
+
+            if (error) {
+                document.getElementById('resultado').innerText = "Erro RLS: " + error.message;
+            } else {
+                document.getElementById('resultado').innerText = JSON.stringify(data, null, 2);
+            }
+        }
+
+        // Inicia o processo quando a página termina de carregar
+        window.onload = iniciarSupabase;
+    </script>
+</body>
+</html>

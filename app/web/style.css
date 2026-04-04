@@ -1,0 +1,102 @@
+/* Variáveis de Cores - Edite aqui para mudar o tema da clínica */
+:root {
+    --pink-primary: #ffb7c5;
+    --pink-dark: #e096a5;
+    --text-main: #4a2c34;
+    --bg-soft: #fffafb;
+    --white: #ffffff;
+    --shadow: 0 8px 30px rgba(0,0,0,0.05);
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: var(--bg-soft);
+    color: var(--text-main);
+    margin: 0;
+    display: flex;
+    overflow-x: hidden;
+}
+
+.hidden { display: none !important; }
+
+/* Menu Lateral */
+nav {
+    width: 240px;
+    background: var(--white);
+    height: 100vh;
+    padding: 30px 20px;
+    border-right: 1px solid rgba(0,0,0,0.05);
+    position: fixed;
+    box-shadow: 2px 0 10px rgba(0,0,0,0.02);
+}
+
+nav h3 { color: var(--pink-primary); margin-bottom: 40px; text-align: center; font-size: 1.5rem; }
+
+nav button {
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: none;
+    background: transparent;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 12px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    color: var(--text-main);
+}
+
+nav button:hover { background: #fff0f3; transform: translateX(5px); }
+
+nav button.active { background: var(--pink-primary); color: white; box-shadow: 0 4px 15px rgba(255, 183, 197, 0.4); }
+
+/* Área Principal */
+main { flex: 1; padding: 50px; margin-left: 240px; min-height: 100vh; }
+
+.card {
+    background: var(--white);
+    padding: 30px;
+    border-radius: 20px;
+    box-shadow: var(--shadow);
+    animation: fadeIn 0.5s ease-out;
+}
+
+/* Inputs e Botões */
+input {
+    padding: 12px 15px;
+    border: 1px solid #eee;
+    border-radius: 10px;
+    width: 100%;
+    margin-bottom: 15px;
+    transition: border 0.3s;
+    outline: none;
+}
+
+input:focus { border-color: var(--pink-primary); }
+
+button.primary {
+    background: var(--pink-primary);
+    color: white;
+    border: none;
+    padding: 14px 25px;
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.3s;
+}
+
+button.primary:hover { background: var(--pink-dark); transform: translateY(-2px); }
+
+/* Animações */
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+.tab-content { display: none; }
+.tab-content.active { display: block; animation: fadeIn 0.4s ease; }
+.login-page {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #fffafb 0%, #ffedf1 100%);
+}
+.logout-btn { color: #ff6b6b !important; margin-top: auto; }

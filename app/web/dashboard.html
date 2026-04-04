@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bella SaaS - Gestão de Clínica</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav id="sidebar">
+        <div class="logo">
+            <h3>🌸 Bella SaaS</h3>
+            <small>Painel Administrativo</small>
+        </div>
+
+        <div class="nav-group">
+            <button id="btn-agenda" class="active">📅 Agenda</button>
+            <button id="btn-equipe">👩‍⚕️ Equipe</button>
+        </div>
+
+        <button id="btn-logout" class="logout-btn">🚪 Sair do Sistema</button>
+    </nav>
+
+    <main>
+        <header>
+            <h1 id="page-title">Bem-vindo ao Painel</h1>
+        </header>
+
+        <div id="main-content">
+            <section id="tab-agenda" class="tab-content active">
+                <div class="section-header">
+                    <h2>📅 Agenda do Dia</h2>
+                </div>
+                <div id="lista-agenda" class="card">
+                    <p class="loading">Carregando agendamentos...</p>
+                </div>
+            </section>
+
+            <section id="tab-equipe" class="tab-content">
+                <div class="section-header">
+                    <h2>👩‍⚕️ Gerenciar Equipe</h2>
+                    <p>Cadastre profissionais de qualquer especialidade.</p>
+                </div>
+
+                <div class="card">
+                    <div class="form-group-horizontal">
+                        <input type="text" id="prof-nome" placeholder="Nome Completo">
+
+                        <input type="text" id="prof-especialidade" placeholder="Especialidade (ex: Estética, Nutrição, Fisio)">
+
+                        <button id="btn-add-prof" class="primary">➕ Cadastrar Profissional</button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3>Profissionais Ativos</h3>
+                    <ul id="lista-prof" class="custom-list">
+                        </ul>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
