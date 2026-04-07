@@ -81,7 +81,7 @@ Plaintext
 ```
 
 ### 🚀 Roadmap de Evolução
-- [ ] Dashboard Admin: Painel Web para a clínica gerenciar ou cancelar horários manualmente.
+- [x] Dashboard Admin: Painel Web para a clínica gerenciar ou cancelar horários manualmente.
 
 - [ ] Google Calendar Sync: Sincronização automática com a agenda do Google.
 
